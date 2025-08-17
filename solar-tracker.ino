@@ -4,6 +4,9 @@
 #define AZ_PIN 9
 #define AL_PIN 8
 
+// Function prototypes
+int average(int val_1, int val_2);
+
 Servo AzimuthServo;
 Servo AltitudeServo;
 
@@ -31,16 +34,16 @@ void setup() {
 void loop() {
   
   int photoResQ1 = analogRead(A0);
-  int photoResQ2 = analogRead(A2);
-  int photoResQ3 = analogRead(A3);
-  int photoResQ4 = analogRead(A4);
+  int photoResQ2 = analogRead(A1);
+  int photoResQ3 = analogRead(A2);
+  int photoResQ4 = analogRead(A3);
 
-  // Q1-Q2 pair
-  if( photoResQ1 > photoResQ2){
+  // azimuth pair
+  if(average(photoResQ2,photoResQ3) > average(photoResQ1,photoResQ4)){
     g_az_val++;
     AzimuthServo.write(g_az_val); 
   }
-  else if (photoResQ1 < photoResQ2){
+  else if (average(photoResQ2,photoResQ3) < average(photoResQ1,photoResQ4)){
     g_az_val--;
     AzimuthServo.write(g_az_val); 
   }
@@ -49,40 +52,12 @@ void loop() {
     g_az_val = g_az_val;
   }
 
-  // Q3-Q4 pair
-  if( photoResQ3 > photoResQ4){
-    g_az_val++;
-    AzimuthServo.write(g_az_val); 
-  }
-  else if (photoResQ3 < photoResQ4){
-    g_az_val--;
-    AzimuthServo.write(g_az_val); 
-  }
-  else
-  {
-    g_az_val = g_az_val;
-  }
-
-  // Q2-Q3
-  if( photoResQ2 > photoResQ3){
+  // altitude pair
+  if(average(photoResQ1,photoResQ2) > average(photoResQ3,photoResQ4)){
     g_alt_val++;
     AltitudeServo.write(g_alt_val);
   }
-  else if (photoResQ2 < photoResQ3){
-    g_alt_val--;
-    AltitudeServo.write(g_alt_val);
-  }
-  else
-  {
-    g_alt_val = g_alt_val;
-  }
-
-  // Q1-Q4
-  if( photoResQ1 > photoResQ4){
-    g_alt_val++;
-    AltitudeServo.write(g_alt_val);
-  }
-  else if (photoResQ1 < photoResQ4){
+  else if (average(photoResQ1,photoResQ2) < average(photoResQ3,photoResQ4)){
     g_alt_val--;
     AltitudeServo.write(g_alt_val);
   }
