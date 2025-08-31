@@ -35,7 +35,7 @@ void setup() {
   AzimuthServo.attach(AZ_PIN);  // attaches the servo on pin 9 to the Servo object
   AltitudeServo.attach(AL_PIN);
   pinMode(LED_BUILTIN, OUTPUT); 
-  timer.every(1000, heartbeat); // schedule timer to tick every 1000ms
+  timer.every(500, heartbeat); // schedule timer to tick every 1000ms
 
   // see if the card is present and can be initialised
   /*if(!SD.begin(chipSelect)){
@@ -53,42 +53,40 @@ void loop() {
   int photoResQ4 = analogRead(A3);
 
   // azimuth pair
+  Serial.println(average(photoResQ2,photoResQ3));
+  Serial.println(average(photoResQ1,photoResQ4));
     if(average(photoResQ2,photoResQ3) > average(photoResQ1,photoResQ4)){
-      g_az_val++;
-      char az = 'z';
-      servoWrite(g_az_val, az); 
+      
+      if (g_az_val<180){ 
+        g_az_val++;
+      }
     }
     else if (average(photoResQ2,photoResQ3) < average(photoResQ1,photoResQ4)){
-      g_az_val--;
-      char az = 'z';
-      servoWrite(g_az_val, az); 
+      if (g_az_val>0){ 
+        g_az_val--;
+      }
     }
     else
     {
-      g_az_val = g_az_val;
+      g_az_val=g_az_val;
     }
+    servoWrite(g_az_val, 'z'); 
 
     // altitude pair
     if(average(photoResQ1,photoResQ2) > average(photoResQ3,photoResQ4)){
-      g_alt_val++;
-      char al = 'l';
-      servoWrite(g_az_val, al); 
+      if (g_alt_val<180){ 
+        g_alt_val++;
+      }
     }
     else if (average(photoResQ1,photoResQ2) < average(photoResQ3,photoResQ4)){
-      g_alt_val--;
-      char al = 'l';
-      servoWrite(g_az_val, al); 
+      if (g_alt_val>0){ 
+        g_alt_val--;
+      }
     }
     else
     {
-      g_alt_val = g_alt_val;
+      g_alt_val=g_alt_val;
     }
-  // // non-blocking delay to move servo
-  // if (currentMillis - g_systick >= g_interval) {
-  //   g_systick = currentMillis;
-  //   g_val = analogRead(POTPIN);            // reads the value of the potentiometer (value between 0 and 1023)
-  //   g_val = map(g_val, 0, 1023, 0, 180);     // scale it for use with the servo (value between 0 and 180)
-  //   AzimuthServo.write(g_val);                  // sets the servo position according to the scaled value
-  // }
+    servoWrite(g_alt_val, 'l'); 
   timer.tick();
 }
