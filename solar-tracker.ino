@@ -1,26 +1,30 @@
 #include <Servo.h>
 #include <arduino-timer.h>
+#include <SPI.h>
+#include <SD.h>
 
 #define AZ_PIN 9
 #define AL_PIN 10
 
 // Function prototypes
 int average(int val_1, int val_2);
+void logData(float dataToWrite);
+int servoWrite(int step, char motor);
 
 Servo AzimuthServo;
 Servo AltitudeServo;
 
 auto timer = timer_create_default();
 
+const int chipSelect = 4;
 int g_val;    // variable to read the value from the analog pin
 unsigned long g_systick = 0;
-const long g_interval = 15;
 const long beat = 1000;
 int g_az_val = 90;
 int g_alt_val =  90;
 
 // heartbeat ISR
-volatile bool heartbeat(void *){
+bool heartbeat(void *){
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // toggle the LED
   return true; // repeat? true
 }
@@ -33,28 +37,12 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT); 
   timer.every(1000, heartbeat); // schedule timer to tick every 1000ms
 
-  // // Servo test
-  // int pos = 0;
-  //   for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
-  //   // in steps of 1 degree
-  //   AzimuthServo.write(pos);              // tell servo to go to position in variable 'pos'
-  //   delay(15);                       // waits 15 ms for the servo to reach the position
-  // }
-  // for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
-  //   AzimuthServo.write(pos);              // tell servo to go to position in variable 'pos'
-  //   delay(15);                       // waits 15 ms for the servo to reach the position
-  // }
-  //  int pos =90;
-  // for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
-  //   // in steps of 1 degree
-  //   AltitudeServo.write(pos);              // tell servo to go to position in variable 'pos'
-  //   delay(15);                       // waits 15 ms for the servo to reach the position
-  // }
-  // for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
-  //   AltitudeServo.write(pos);              // tell servo to go to position in variable 'pos'
-  //   delay(15);                       // waits 15 ms for the servo to reach the position
-  // }
-
+  // see if the card is present and can be initialised
+  /*if(!SD.begin(chipSelect)){
+    Serial.println("Card failed, or not present.");
+    while(1);
+  }
+  Serial.println("Card intialised.");*/
 }
 
 void loop() {
@@ -65,58 +53,36 @@ void loop() {
   int photoResQ4 = analogRead(A3);
 
   // azimuth pair
-  if(average(photoResQ2,photoResQ3) > average(photoResQ1,photoResQ4)){
-    g_az_val++;
-    AzimuthServo.write(g_az_val); 
-    delay(5);
-  }
-  else if (average(photoResQ2,photoResQ3) < average(photoResQ1,photoResQ4)){
-    g_az_val--;
-    AzimuthServo.write(g_az_val); 
-    delay(5);
-  }
-  else
-  {
-    g_az_val = g_az_val;
-    delay(5);
-  }
+    if(average(photoResQ2,photoResQ3) > average(photoResQ1,photoResQ4)){
+      g_az_val++;
+      char az = 'z';
+      servoWrite(g_az_val, az); 
+    }
+    else if (average(photoResQ2,photoResQ3) < average(photoResQ1,photoResQ4)){
+      g_az_val--;
+      char az = 'z';
+      servoWrite(g_az_val, az); 
+    }
+    else
+    {
+      g_az_val = g_az_val;
+    }
 
-  // altitude pair
-  if(average(photoResQ1,photoResQ2) > average(photoResQ3,photoResQ4)){
-    g_alt_val++;
-    AltitudeServo.write(g_alt_val);
-    delay(5);
-  }
-  else if (average(photoResQ1,photoResQ2) < average(photoResQ3,photoResQ4)){
-    g_alt_val--;
-    AltitudeServo.write(g_alt_val);
-    delay(5);
-  }
-  else
-  {
-    g_alt_val = g_alt_val;
-  }
-
-
-  // Serial.print("Q1: ");
-  // Serial.println(photoResQ1);
-  // Serial.print("Q2: ");
-  // Serial.println(photoResQ2);
-  // Serial.print("Q3: ");
-  // Serial.println(photoResQ3);
-  // Serial.print("Q4: ");
-  // Serial.println(photoResQ4);
-  // Serial.print("Q2 Q3 Avg: ");
-  // Serial.println(average(photoResQ2,photoResQ3));
-  // Serial.print("Q1 Q4 Avg: ");
-  // Serial.println(average(photoResQ1,photoResQ4));
-  // Serial.print("Q1 Q2 Avg: ");
-  // Serial.println(average(photoResQ1,photoResQ2));
-  // Serial.print("Q3 Q4 Avg: ");
-  // Serial.println(average(photoResQ3,photoResQ4));
-
-  unsigned long currentMillis = millis();
-
+    // altitude pair
+    if(average(photoResQ1,photoResQ2) > average(photoResQ3,photoResQ4)){
+      g_alt_val++;
+      char al = 'l';
+      servoWrite(g_az_val, al); 
+    }
+    else if (average(photoResQ1,photoResQ2) < average(photoResQ3,photoResQ4)){
+      g_alt_val--;
+      char al = 'l';
+      servoWrite(g_az_val, al); 
+    }
+    else
+    {
+      g_alt_val = g_alt_val;
+    }
   // // non-blocking delay to move servo
   // if (currentMillis - g_systick >= g_interval) {
   //   g_systick = currentMillis;
@@ -124,6 +90,5 @@ void loop() {
   //   g_val = map(g_val, 0, 1023, 0, 180);     // scale it for use with the servo (value between 0 and 180)
   //   AzimuthServo.write(g_val);                  // sets the servo position according to the scaled value
   // }
-  delay(200);
   timer.tick();
 }
