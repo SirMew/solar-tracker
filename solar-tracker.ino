@@ -5,7 +5,7 @@
 
 #define AZ_PIN 9
 #define AL_PIN 10
-
+// Working tracker
 // Function prototypes
 int average(int val_1, int val_2);
 void logData(float dataToWrite);
