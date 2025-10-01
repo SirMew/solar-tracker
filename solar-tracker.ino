@@ -23,6 +23,15 @@ const long beat = 1000;
 int g_az_val = 90;
 int g_alt_val =  90;
 
+struct PID_parameters{
+  float K_p;
+  float K_i;
+  float K_d;
+};
+
+struct PID_parameters K_azimuth = {1,1,1};
+struct PID_parameters K_altitude = {1,1,1};
+
 // heartbeat ISR
 bool heartbeat(void *){
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // toggle the LED
@@ -47,46 +56,27 @@ void setup() {
 
 void loop() {
   
+// Azimuth_reference = (average(photoResQ2,photoResQ3) - average(photoResQ1,photoResQ4)) == 0
+// Altitude_reference = (average(photoResQ1,photoResQ2) - average(photoResQ3,photoResQ4)) == 0
   int photoResQ1 = analogRead(A0);
   int photoResQ2 = analogRead(A1);
   int photoResQ3 = analogRead(A2);
   int photoResQ4 = analogRead(A3);
 
-  // azimuth pair
-  Serial.println(average(photoResQ2,photoResQ3));
-  Serial.println(average(photoResQ1,photoResQ4));
-    if(average(photoResQ2,photoResQ3) > average(photoResQ1,photoResQ4)){
-      
-      if (g_az_val<180){ 
-        g_az_val++;
-      }
-    }
-    else if (average(photoResQ2,photoResQ3) < average(photoResQ1,photoResQ4)){
-      if (g_az_val>0){ 
-        g_az_val--;
-      }
-    }
-    else
-    {
-      g_az_val=g_az_val;
-    }
-    servoWrite(g_az_val, 'z'); 
+  float setpoint_reference = 0.0;
+  float azimuth_feedback = (average(photoResQ2,photoResQ3) - average(photoResQ1,photoResQ4));
+  float altitude_feedback = (average(photoResQ1,photoResQ2) - average(photoResQ3,photoResQ4));
+  float azimuth_error = setpoint_reference - azimuth_feedback;
+  float altitude_error = setpoint_refernce - altitude_feedback;
+  // TO DO: Add integral and derivative
+  float control_variable_az = K_azimuth.K_p*azimuth_error + K_azimuth.K_i*(0) + K_azimuth.K_d*(0);
+  float control_variable_alt = K_altitude.K_p*altitude_error + K_altitude.K_i*(0) + K_altitude.K_d*(0);
 
-    // altitude pair
-    if(average(photoResQ1,photoResQ2) > average(photoResQ3,photoResQ4)){
-      if (g_alt_val<180){ 
-        g_alt_val++;
-      }
-    }
-    else if (average(photoResQ1,photoResQ2) < average(photoResQ3,photoResQ4)){
-      if (g_alt_val>0){ 
-        g_alt_val--;
-      }
-    }
-    else
-    {
-      g_alt_val=g_alt_val;
-    }
-    servoWrite(g_alt_val, 'l'); 
+  g_az_val += static_cast<int>(control_variable_az);
+  g_alt_val += static_cast<int>(control_variable_alt);
+
+  servoWrite(constrain(g_az_val,0,180), 'z');
+  servoWrite(constrain(g_alt_val,0,180), 'l');
+
   timer.tick();
 }
