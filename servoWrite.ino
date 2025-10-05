@@ -1,5 +1,5 @@
 /* Writes PWM values to the azimuth or altitude servo motor depending on a char argument */
-int servoWrite(int step, char motor){
+void servoWrite(int step, char motor){
   unsigned long currentMillis = millis();
   const int interval = 5;
     if ((motor == 'z')){
