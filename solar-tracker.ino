@@ -23,20 +23,20 @@ auto timer = timer_create_default();
 int average(int val_1, int val_2);
 void logData(float dataToWrite);
 void servoWrite(int step, char motor);
-void getSensorReadings(int*);
-int getSystemError(int sensor_1, int sensor_2, int sensor_3, int sensor_4, int setpoint);
-int getControlVariable(const PID_parameters &control_value, int error, const int upper_time, const int lower_time,  const int old_error);
+void getSensorReadings(double*);
+double getSystemError(double sensor_1, double sensor_2, double sensor_3, double sensor_4, double setpoint);
+double getControlVariable(const PID_parameters &control_value, int error, const int upper_time, const int lower_time,  const int old_error);
 
 // System parameters
 const int chipSelect = 4;
 unsigned long g_systick = 0;
 const long beat = 1000;
-int g_az_val = 90;
-int g_alt_val =  90;
-int g_setpoint_ref = 0;
+double g_az_val = 90.0;
+double g_alt_val =  90.0;
+double g_setpoint_ref = 0.0;
 int g_prev_time = 0;
-int g_prev_alt_error = 0;
-int g_prev_az_error = 0;
+double g_prev_alt_error = 0.0;
+double g_prev_az_error = 0.0;
 
 // Initialise control values
 PID_parameters K_azimuth = {1,1,1};
@@ -66,19 +66,17 @@ void setup() {
 
 void loop() {
   
-  int photo_resistor[4];
+  double photo_resistor[4];
   getSensorReadings(photo_resistor);
 
   // Azimuth_reference = (average(photoResQ2,photoResQ3) - average(photoResQ1,photoResQ4)) == 0
   // Altitude_reference = (average(photoResQ1,photoResQ2) - average(photoResQ3,photoResQ4)) == 0
-  int azimuth_error = getSystemError(photo_resistor[1],photo_resistor[2],photo_resistor[0],photo_resistor[3], g_setpoint_ref);
-  int altitude_error = getSystemError(photo_resistor[0],photo_resistor[1],photo_resistor[2],photo_resistor[3], g_setpoint_ref);
-
+  double azimuth_error = getSystemError(photo_resistor[1],photo_resistor[2],photo_resistor[0],photo_resistor[3], g_setpoint_ref);
+  double altitude_error = getSystemError(photo_resistor[0],photo_resistor[1],photo_resistor[2],photo_resistor[3], g_setpoint_ref);
   
-  
-  int current_time = static_cast<int>millis();
-  int control_variable_az = getControlVariable(K_azimuth, azimuth_error, current_time, g_prev_time, g_prev_az_error);
-  int control_variable_alt = getControlVariable(K_altitude, altitude_error, current_time, g_prev_time, g_prev_az_error);
+  int current_time = static_cast<int>(millis());
+  double control_variable_az = getControlVariable(K_azimuth, azimuth_error, current_time, g_prev_time, g_prev_az_error);
+  double control_variable_alt = getControlVariable(K_altitude, altitude_error, current_time, g_prev_time, g_prev_az_error);
 
   // set time and error for calculating future integrals and derivatives
   g_prev_time = current_time;
